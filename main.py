@@ -12,7 +12,7 @@ import urllib.parse
 class UnityTrayPlaces:
     def __init__(self):
         self.indicator = AppIndicator3.Indicator.new(
-            "Unity Tray Places 0.0.1",
+            "Unity Tray Places 0.0.2",
             "preferences-system-windows",
             # "folder-open",
             # "image-x-generic",
@@ -69,12 +69,8 @@ class UnityTrayPlaces:
                 'modified': bookmark.get('modified'),
                 'visited': bookmark.get('visited')
             }
-        # reverse the list to show most recent first
-        # bookmarks = dict(reversed(list(bookmarks.items())))
-
         # sort by modified (most recent first)
         bookmarks = dict(sorted(bookmarks.items(), key=lambda x: x[1]['modified'], reverse=True))
-
         # take first 20 existing files
         existing_bookmarks = {}
         count = 0
@@ -84,10 +80,6 @@ class UnityTrayPlaces:
                 count += 1
             if count >= 20:
                 break
-
-        # delete duplicates by path
-        # bookmarks = list(dict.fromkeys(bookmarks, key=lambda x: x['path']))
-        # print(bookmarks)
         return existing_bookmarks
 
     def create_menu(self):
@@ -104,13 +96,12 @@ class UnityTrayPlaces:
         menu.append(Gtk.SeparatorMenuItem())
         # add submmenu for recently used files
         recently_used_menu = Gtk.Menu()
-        recently_used = self.parse_recently_used()
-        for path, data in recently_used.items():
-            item = Gtk.MenuItem(label=data['path_cropped'])
-            item.connect("activate", self.open_bookmark, path)
-            recently_used_menu.append(item)
+        # Initial load of recently used files
+        self.reload_recently_used_menu(None, recently_used_menu)
         recently_used_item = Gtk.MenuItem(label="Recently Used")
         recently_used_item.set_submenu(recently_used_menu)
+        # Connect to "activate" signal to reload recently used files each time menu is opened
+        recently_used_item.connect("activate", self.reload_recently_used_menu, recently_used_menu)
         menu.append(recently_used_item)
         # Add separator
         menu.append(Gtk.SeparatorMenuItem())
@@ -139,6 +130,24 @@ class UnityTrayPlaces:
             # dialog.run()
             # dialog.destroy()
 
+    def reload_recently_used_menu(self, widget, submenu):
+        # Clear existing menu items
+        for item in submenu.get_children():
+            submenu.remove(item)
+        # Reload recently used files
+        recently_used = self.parse_recently_used()
+        for path, data in recently_used.items():
+            # Create a box to hold label and use it for better tooltip support
+            box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+            label = Gtk.Label(label=data['path_cropped'])
+            box.pack_start(label, True, True, 0)
+            item = Gtk.MenuItem()
+            item.add(box)
+            item.set_tooltip_text(path)  # Add tooltip showing full file path
+            item.connect("activate", self.open_bookmark, path)
+            submenu.append(item)
+        submenu.show_all()
+
     def quit(self, widget):
         dialog = Gtk.MessageDialog(
             parent=None,
@@ -155,15 +164,16 @@ class UnityTrayPlaces:
 if __name__ == "__main__":
     # parser = UnityTrayPlaces()
     # bookmarks = parser.parse_recently_used()
-    # # iterate bookmarks, print all fields
     # for path, bookmark in bookmarks.items():
-    #     print('-' * 50)
-    #     print(f"Path: {path}")
-    #     print(f"Href: {bookmark['href']}")
-    #     print(f"File: {bookmark['file_name']}")
-    #     print(f"Modified: {bookmark['modified']}")
+        # print('-' * 50)
+        # print(f"Path: {path}")
+        # print(f"Href: {bookmark['href']}")
+        # print(f"Path cropped: {bookmark['path_cropped']}")
+        # print(f"File: {bookmark['file_name']}")
+        # print(f"Modified: {bookmark['modified']}")
+        # print(f"Visited: {bookmark['visited']}")
     # print('=' * 50)
-    # print(f'total: {len(parser.parse_recently_used())}')
+    # print(f'total: {len(bookmarks)}')
 
     UnityTrayPlaces()
     Gtk.main()
