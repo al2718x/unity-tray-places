@@ -12,7 +12,7 @@ import urllib.parse
 class UnityTrayPlaces:
     def __init__(self):
         self.indicator = AppIndicator3.Indicator.new(
-            "Unity Tray Places 0.0.2",
+            "Unity Tray Places 0.0.3",
             "preferences-system-windows",
             # "folder-open",
             # "image-x-generic",
@@ -84,7 +84,7 @@ class UnityTrayPlaces:
 
     def create_menu(self):
         menu = Gtk.Menu()
-        # Add GTK bookmarks
+        # add GTK bookmarks
         bookmarks = self.read_gtk_bookmarks()
         for bookmark in bookmarks:
             label = bookmark.split(' ')[-1]
@@ -92,7 +92,7 @@ class UnityTrayPlaces:
             item = Gtk.MenuItem(label=label)
             item.connect("activate", self.open_bookmark, path)
             menu.append(item)
-        # Add separator
+        # add separator
         menu.append(Gtk.SeparatorMenuItem())
         # add submmenu for recently used files
         recently_used_menu = Gtk.Menu()
@@ -103,9 +103,13 @@ class UnityTrayPlaces:
         # Connect to "activate" signal to reload recently used files each time menu is opened
         recently_used_item.connect("activate", self.reload_recently_used_menu, recently_used_menu)
         menu.append(recently_used_item)
-        # Add separator
+        # add separator
         menu.append(Gtk.SeparatorMenuItem())
-        # Add quit item
+        # add restart item
+        item_restart = Gtk.MenuItem(label="Restart")
+        item_restart.connect("activate", self.restart)
+        menu.append(item_restart)
+        # add quit item
         item_quit = Gtk.MenuItem(label="Quit")
         item_quit.connect("activate", self.quit)
         menu.append(item_quit)
@@ -143,10 +147,24 @@ class UnityTrayPlaces:
             box.pack_start(label, True, True, 0)
             item = Gtk.MenuItem()
             item.add(box)
-            item.set_tooltip_text(path)  # Add tooltip showing full file path
+            item.set_tooltip_text(path)  # add tooltip showing full file path
             item.connect("activate", self.open_bookmark, path)
             submenu.append(item)
         submenu.show_all()
+
+    def restart(self, widget):
+        dialog = Gtk.MessageDialog(
+            parent=None,
+            flags=0,
+            message_type=Gtk.MessageType.QUESTION,
+            buttons=Gtk.ButtonsType.YES_NO,
+            text="Are you sure?"
+        )
+        response = dialog.run()
+        dialog.destroy()
+        if response == Gtk.ResponseType.YES:
+            os.system("./run &")
+            Gtk.main_quit()
 
     def quit(self, widget):
         dialog = Gtk.MessageDialog(
