@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from configparser import ConfigParser
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('AppIndicator3', '0.1')
@@ -12,7 +13,7 @@ import urllib.parse
 class UnityTrayPlaces:
     def __init__(self):
         self.indicator = AppIndicator3.Indicator.new(
-            "Unity Tray Places 0.0.3",
+            "Unity Tray Places 0.0.4",
             "preferences-system-windows",
             # "folder-open",
             # "image-x-generic",
@@ -82,8 +83,28 @@ class UnityTrayPlaces:
                 break
         return existing_bookmarks
 
+    # class CaseConfigParser(ConfigParser):
+        # def optionxform(self, optionstr):
+            # return optionstr
+
+    def read_config(self):
+        # config = self.CaseConfigParser()
+        config = ConfigParser()
+        config.optionxform = str
+        config.read(".config")
+        return dict(config.items("my-places", raw=True))
+
     def create_menu(self):
         menu = Gtk.Menu()
+
+        # add custom places from .config
+        custom_places = self.read_config()
+        print(custom_places)
+        for name, path in custom_places.items():
+            item = Gtk.MenuItem(label=name)
+            item.connect("activate", self.open_bookmark, path)
+            menu.append(item)
+
         # add GTK bookmarks
         bookmarks = self.read_gtk_bookmarks()
         for bookmark in bookmarks:
@@ -92,23 +113,28 @@ class UnityTrayPlaces:
             item = Gtk.MenuItem(label=label)
             item.connect("activate", self.open_bookmark, path)
             menu.append(item)
+
         # add separator
         menu.append(Gtk.SeparatorMenuItem())
+
         # add submmenu for recently used files
         recently_used_menu = Gtk.Menu()
         # Initial load of recently used files
         self.reload_recently_used_menu(None, recently_used_menu)
         recently_used_item = Gtk.MenuItem(label="Recently Used")
         recently_used_item.set_submenu(recently_used_menu)
-        # Connect to "activate" signal to reload recently used files each time menu is opened
+        # connect to "activate" signal to reload recently used files each time menu is opened
         recently_used_item.connect("activate", self.reload_recently_used_menu, recently_used_menu)
         menu.append(recently_used_item)
+
         # add separator
         menu.append(Gtk.SeparatorMenuItem())
+
         # add restart item
         item_restart = Gtk.MenuItem(label="Restart")
         item_restart.connect("activate", self.restart)
         menu.append(item_restart)
+
         # add quit item
         item_quit = Gtk.MenuItem(label="Quit")
         item_quit.connect("activate", self.quit)
