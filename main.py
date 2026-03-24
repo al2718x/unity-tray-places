@@ -13,7 +13,7 @@ import urllib.parse
 class UnityTrayPlaces:
     def __init__(self):
         self.indicator = AppIndicator3.Indicator.new(
-            "Unity Tray Places 0.0.4",
+            "Unity Tray Places 0.0.5",
             "preferences-system-windows",
             # "folder-open",
             # "image-x-generic",
@@ -92,14 +92,16 @@ class UnityTrayPlaces:
         config = ConfigParser()
         config.optionxform = str
         config.read(".config")
-        return dict(config.items("my-places", raw=True))
+        try:
+            return dict(config.items("my-places", raw=True))
+        except:
+            return {}
 
     def create_menu(self):
         menu = Gtk.Menu()
 
         # add custom places from .config
         custom_places = self.read_config()
-        print(custom_places)
         for name, path in custom_places.items():
             item = Gtk.MenuItem(label=name)
             item.connect("activate", self.open_bookmark, path)
