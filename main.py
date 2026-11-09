@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 from configparser import ConfigParser
-import gi
+import gi  # type: ignore[import-untyped]
 gi.require_version('Gtk', '3.0')
 gi.require_version('AppIndicator3', '0.1')
-from gi.repository import Gtk
-from gi.repository import AppIndicator3
+from gi.repository import Gtk  # type: ignore[import-untyped]
+from gi.repository import AppIndicator3  # type: ignore[import-untyped]
 import os
 import xml.etree.ElementTree as ET
 import urllib.parse
@@ -13,7 +13,7 @@ import urllib.parse
 class UnityTrayPlaces:
     def __init__(self):
         self.indicator = AppIndicator3.Indicator.new(
-            "Unity Tray Places 0.0.5",
+            "Unity Tray Places 0.0.6",
             "preferences-system-windows",
             # "folder-open",
             # "image-x-generic",
@@ -71,7 +71,7 @@ class UnityTrayPlaces:
                 'visited': bookmark.get('visited')
             }
         # sort by modified (most recent first)
-        bookmarks = dict(sorted(bookmarks.items(), key=lambda x: x[1]['modified'], reverse=True))
+        bookmarks = dict(sorted(bookmarks.items(), key=lambda x: x[1]['modified'] or '', reverse=True))
         # take first 20 existing files
         existing_bookmarks = {}
         count = 0
